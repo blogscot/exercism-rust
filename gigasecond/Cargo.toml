@@ -1,0 +1,8 @@
+[package]
+name = "gigasecond"
+version = "0.1.0"
+authors = ["Iain Diamond <iain@iain.com>"]
+
+[dependencies]
+chrono = "0.3"
+
