@@ -15,18 +15,18 @@ pub fn sing(start : i32, end : i32) -> String {
 
 fn pluralise(number: i32, capitalise : bool) -> String {
     match number {
-        number if number == 1               => "1 bottle".into(),
-        number if number == 0 && capitalise => "No more bottles".into(),
-        number if number == 0               => "no more bottles".into(),
-        number if number == -1              => "99 bottles".into(),
-        _                                   => format!("{} bottles", number),
+        1               => "1 bottle".into(),
+        0 if capitalise => "No more bottles".into(),
+        0               => "no more bottles".into(),
+        -1              => "99 bottles".into(),
+        _               => format!("{} bottles", number),
     }
 }
 
 fn action<'a>(number: i32) -> &'a str {
     match number {
-        number if number == 1 => "Take it down and pass it around",
-        number if number == 0 => "Go to the store and buy some more",
-        _                     => "Take one down and pass it around"
+        1 => "Take it down and pass it around",
+        0 => "Go to the store and buy some more",
+        _ => "Take one down and pass it around"
     }
 }
