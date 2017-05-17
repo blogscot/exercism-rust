@@ -1,0 +1,6 @@
+[package]
+name = "acronym"
+version = "1.0.0"
+
+[dependencies]
+regex = "0.2"
