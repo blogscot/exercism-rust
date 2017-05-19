@@ -1,6 +1,3 @@
-extern crate num;
-use num::Num;
-
 #[derive(PartialEq)]
 pub enum Triangle {
     Equilateral,
