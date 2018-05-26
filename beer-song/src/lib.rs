@@ -7,7 +7,7 @@ pub fn verse(n : i32) -> String {
 
 pub fn sing(start : i32, end : i32) -> String {
     let mut result : Vec<String> = Vec::new();
-    for n in (end..start+1).rev() {
+    for n in (end..=start).rev() {
         result.push(verse(n));
     }
     result.join("\n")

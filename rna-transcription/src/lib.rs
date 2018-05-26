@@ -20,12 +20,9 @@ impl DeoxyribonucleicAcid {
     }
 
     pub fn to_rna(&self) -> RibonucleicAcid {
-        let rna = self.dna
-            .chars()
-            .map(|ch| convert(ch))
-            .collect::<String>();
+        let rna = self.dna.chars().map(convert).collect::<String>();
 
-        RibonucleicAcid { rna: rna }
+        RibonucleicAcid { rna }
     }
 }
 

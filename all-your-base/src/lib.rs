@@ -3,7 +3,9 @@ pub fn convert(number: &[u32], from_base: u32, to_base: u32) -> Result<Vec<u32>,
 }
 
 fn from(number: &[u32], base: u32) -> Result<u32, String> {
-    if !is_valid_digits(number, base) || base < 2 {
+    let is_valid = |digits: &[u32], base| digits.iter().all(|x| x < base);
+
+    if !is_valid(number, &base) || base < 2 {
         return Err("Invalid parameters!".into());
     }
     Ok(number.iter().fold(0, |acc, value| acc * base + value))
@@ -20,8 +22,4 @@ fn to(mut number: u32, base: u32) -> Result<Vec<u32>, String> {
         number = quot
     }
     Ok(output.into_iter().rev().collect())
-}
-
-fn is_valid_digits(digits: &[u32], base: u32) -> bool {
-    digits.iter().all(|x| x < &base)
 }

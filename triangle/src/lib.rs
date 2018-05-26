@@ -28,9 +28,7 @@ impl<T: Num + Copy + PartialOrd> Triangle<T> {
                 Err("Invalid triangle".into())
             }
             (a, b, c) if a + b < c => Err("Invalid triangle".into()),
-            (a, b, c) if a == b && b == c => {
-                Ok(Self::construct(sides, TriangleType::Equilateral))
-            }
+            (a, b, c) if a == b && b == c => Ok(Self::construct(sides, TriangleType::Equilateral)),
             (a, b, c) if a == b || b == c || a == c => {
                 Ok(Self::construct(sides, TriangleType::Isosceles))
             }

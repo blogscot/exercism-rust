@@ -24,7 +24,7 @@ impl Roman {
         let mut roman: String = String::new();
         for numeral in NUMERALS.iter().rev() {
             while number >= numeral.value {
-                roman = roman + numeral.symbol;
+                roman += numeral.symbol;
                 number -= numeral.value;
             }
         }

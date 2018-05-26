@@ -1,8 +1,10 @@
 pub fn encode(text: &str) -> String {
-    if text.is_empty() {return text.into()}
+    if text.is_empty() {
+        return text.into();
+    }
 
     let mut encoded = String::new();
-    let mut count: u32 = 1;
+    let mut count = 1;
     let mut current = text.chars().nth(0).unwrap();
 
     for c in text.chars().skip(1) {
@@ -28,10 +30,9 @@ fn convert(n: u32) -> String {
     }
 }
 
-
 pub fn decode(text: &str) -> String {
-    let mut numerals: String = String::new();
-    let mut decoded: String = String::new();
+    let mut numerals = String::new();
+    let mut decoded = String::new();
 
     for c in text.chars() {
         if c.is_numeric() {

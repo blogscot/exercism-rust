@@ -13,7 +13,7 @@ impl ChessPosition {
         if row < 0 || col < 0 || row >= 8 || col >= 8 {
             return Err("Invalid Parameters!".into());
         }
-        Ok(ChessPosition { row: row, col: col })
+        Ok(ChessPosition { row, col })
     }
 }
 
@@ -23,11 +23,11 @@ impl Queen {
     }
 
     pub fn can_attack(self, queen: &Queen) -> bool {
-        self.pos.col == queen.pos.col || self.pos.row == queen.pos.row ||
-        Self::on_diagonal(self.pos.clone(), queen.pos.clone())
+        self.pos.col == queen.pos.col || self.pos.row == queen.pos.row
+            || Self::on_diagonal(&self.pos, &queen.pos)
     }
 
-    fn on_diagonal(pos1: ChessPosition, pos2: ChessPosition) -> bool {
+    fn on_diagonal(pos1: &ChessPosition, pos2: &ChessPosition) -> bool {
         let delta_x = (pos1.col - pos2.col).abs();
         let delta_y = (pos1.row - pos2.row).abs();
         delta_x == delta_y

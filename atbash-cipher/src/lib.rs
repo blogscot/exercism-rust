@@ -1,4 +1,3 @@
-use std::ascii::AsciiExt;
 
 pub fn encode(text: &str) -> String {
     text.to_lowercase()
@@ -15,12 +14,12 @@ pub fn encode(text: &str) -> String {
 pub fn decode(text: &str) -> String {
     text.replace(" ", "")
         .chars()
-        .map(|ch| convert(ch))
-        .collect::<String>()
+        .map(convert)
+        .collect()
 }
 
 fn convert(chr: char) -> char {
-    let (a, z, c) = ('a' as u8, 'z' as u8, chr as u8);
+    let (a, z, c) = (b'a', b'z', chr as u8);
 
     match chr {
         'a'...'z' => (z - c + a) as char,

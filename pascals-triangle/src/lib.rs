@@ -1,5 +1,5 @@
 pub struct PascalsTriangle {
-    rows: Vec<Vec<u32>>
+    rows: Vec<Vec<u32>>,
 }
 
 impl PascalsTriangle {
@@ -10,9 +10,7 @@ impl PascalsTriangle {
             rows.push(row.clone());
             row = next(&row);
         }
-        PascalsTriangle {
-            rows: rows
-        }
+        PascalsTriangle { rows }
     }
 
     pub fn rows(&self) -> Vec<Vec<u32>> {

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 pub fn word_count(text: &str) -> HashMap<String, u32> {
-    let cleaned = clean(text.to_lowercase());
+    let cleaned = clean(&text.to_lowercase());
     let mut words = HashMap::new();
 
     for word in cleaned.split_terminator(' ') {
@@ -11,7 +11,7 @@ pub fn word_count(text: &str) -> HashMap<String, u32> {
     words
 }
 
-fn clean(text: String) -> String {
+fn clean(text: &str) -> String {
     let text = text.chars()
         .filter(|&ch| ch.is_alphanumeric() || ch == ' ')
         .collect::<String>();
