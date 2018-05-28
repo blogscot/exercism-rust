@@ -13,9 +13,9 @@ fn calculate_sides(a: u32) -> (u32, u32, u32) {
 
 fn triplet(n: u32, sides: (u32, u32, u32)) -> (u32, u32, u32) {
   let (x, y, z) = sides;
-  let a = x * n;
-  let b = y * n;
-  let c = z * n;
+  let a = x * n * n;
+  let b = y * n * n;
+  let c = z * n * n;
   assert_eq!(a * a + b * b, c * c);
   (a, b, c)
 }
