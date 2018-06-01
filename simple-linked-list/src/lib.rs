@@ -1,10 +1,10 @@
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 struct Node<T> {
   data: T,
   next: Option<Box<Node<T>>>,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub struct SimpleLinkedList<T> {
   head: Option<Box<Node<T>>>,
 }
@@ -15,7 +15,10 @@ impl<T> Default for SimpleLinkedList<T> {
   }
 }
 
-impl<T> SimpleLinkedList<T> {
+impl<T> SimpleLinkedList<T>
+where
+  T: Clone,
+{
   pub fn new() -> Self {
     SimpleLinkedList { head: None }
   }
@@ -46,14 +49,11 @@ impl<T> SimpleLinkedList<T> {
     self.head = new_node;
   }
 
-  pub fn pop(&mut self) -> Option<T>
-  where
-    T: Copy,
-  {
+  pub fn pop(&mut self) -> Option<T> {
     match self.head.take() {
       None => None,
       Some(node) => {
-        let data = node.data;
+        let data = node.clone().data;
         self.head = node.next;
         Some(data)
       }
@@ -68,7 +68,7 @@ impl<T> SimpleLinkedList<T> {
   }
 }
 
-impl<T: Copy + Clone> SimpleLinkedList<T> {
+impl<T: Clone> SimpleLinkedList<T> {
   pub fn rev(self) -> SimpleLinkedList<T> {
     let mut list: SimpleLinkedList<T> = SimpleLinkedList::new();
     let mut cloned_list = self.clone();
@@ -90,7 +90,7 @@ impl<'a, T: Clone> From<&'a [T]> for SimpleLinkedList<T> {
   }
 }
 
-impl<T: Copy + Clone> Into<Vec<T>> for SimpleLinkedList<T> {
+impl<T: Clone> Into<Vec<T>> for SimpleLinkedList<T> {
   fn into(self) -> Vec<T> {
     let mut vec: Vec<T> = vec![];
     let mut cloned_list = self.clone();
