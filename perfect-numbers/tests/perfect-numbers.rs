@@ -1,6 +1,6 @@
 extern crate perfect_numbers;
 
-use perfect_numbers::{Classification, classify};
+use perfect_numbers::{classify, Classification};
 
 macro_rules! tests {
     ($property_test_func:ident {
@@ -25,19 +25,18 @@ fn basic() {
     assert_eq!(classify(0), None);
 }
 
-
 tests! {
     test_classification {
-        #[ignore] test_1(1, Classification::Deficient);
-        #[ignore] test_2(2, Classification::Deficient);
-        #[ignore] test_4(4, Classification::Deficient);
-        #[ignore] test_6(6, Classification::Perfect);
-        #[ignore] test_12(12, Classification::Abundant);
-        #[ignore] test_28(28, Classification::Perfect);
-        #[ignore] test_30(30, Classification::Abundant);
-        #[ignore] test_32(32, Classification::Deficient);
-        #[ignore] test_33550335(33550335, Classification::Abundant);
-        #[ignore] test_33550336(33550336, Classification::Perfect);
-        #[ignore] test_33550337(33550337, Classification::Deficient);
+        test_1(1, Classification::Deficient);
+        test_2(2, Classification::Deficient);
+        test_4(4, Classification::Deficient);
+        test_6(6, Classification::Perfect);
+        test_12(12, Classification::Abundant);
+        test_28(28, Classification::Perfect);
+        test_30(30, Classification::Abundant);
+        test_32(32, Classification::Deficient);
+        test_33550335(33550335, Classification::Abundant);
+        test_33550336(33550336, Classification::Perfect);
+        test_33550337(33550337, Classification::Deficient);
     }
 }
