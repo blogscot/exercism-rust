@@ -50,21 +50,15 @@ where
   }
 
   pub fn pop(&mut self) -> Option<T> {
-    match self.head.take() {
-      None => None,
-      Some(node) => {
-        let data = node.clone().data;
-        self.head = node.next;
-        Some(data)
-      }
-    }
+    self.head.take().map(|node| {
+      let node = *node;
+      self.head = node.next;
+      node.data
+    })
   }
 
   pub fn peek(&self) -> Option<&T> {
-    match self.head {
-      None => None,
-      Some(ref node) => Some(&node.data),
-    }
+    self.head.as_ref().map(|node| &node.data)
   }
 }
 
