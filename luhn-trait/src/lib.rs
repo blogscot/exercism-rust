@@ -1,8 +1,3 @@
-#[derive(Debug)]
-pub struct Luhn {
-  text: String,
-}
-
 pub trait ValidLuhn {
   fn valid_luhn(&self) -> bool;
   fn calculate_sum(sequence: &str) -> u32 {
