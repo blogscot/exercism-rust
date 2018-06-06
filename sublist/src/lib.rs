@@ -8,7 +8,7 @@ pub enum Comparison {
 
 use Comparison::*;
 
-fn is_infix_of<T: Copy + Clone + PartialEq>(first: &[T], second: &[T]) -> bool {
+fn is_infix_of<T: Clone + PartialEq>(first: &[T], second: &[T]) -> bool {
   if first.is_empty() {
     return true;
   }
@@ -19,7 +19,7 @@ fn is_infix_of<T: Copy + Clone + PartialEq>(first: &[T], second: &[T]) -> bool {
   let clipped: Vec<T> = second
     .iter()
     .cloned()
-    .skip_while(|&value| value != first[0])
+    .skip_while(|value| *value != first[0])
     .collect();
 
   if clipped.is_empty() || first.len() > clipped.len() {
@@ -33,7 +33,7 @@ fn is_infix_of<T: Copy + Clone + PartialEq>(first: &[T], second: &[T]) -> bool {
   true
 }
 
-pub fn sublist<T: Copy + Clone + PartialEq>(first: &[T], second: &[T]) -> Comparison {
+pub fn sublist<T: Clone + PartialEq>(first: &[T], second: &[T]) -> Comparison {
   if first == second {
     return Equal;
   } else if is_infix_of(first, second) {
