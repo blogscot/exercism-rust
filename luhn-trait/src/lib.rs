@@ -30,45 +30,12 @@ pub trait ValidLuhn {
   }
 }
 
-impl ValidLuhn for String {
+impl<T: ToString> ValidLuhn for T {
   fn valid_luhn(&self) -> bool {
-    let cleaned = self.replace(" ", "");
+    let cleaned: String = self.to_string().replace(" ", "");
     if Self::is_valid_sequence(&cleaned) {
       return Self::calculate_sum(&cleaned) % 10 == 0;
     }
     false
-  }
-}
-
-impl ValidLuhn for &'static str {
-  fn valid_luhn(&self) -> bool {
-    self.to_string().valid_luhn()
-  }
-}
-
-impl ValidLuhn for u8 {
-  fn valid_luhn(&self) -> bool {
-    self.to_string().valid_luhn()
-  }
-}
-
-impl ValidLuhn for u16 {
-  fn valid_luhn(&self) -> bool {
-    self.to_string().valid_luhn()
-  }
-}
-impl ValidLuhn for u32 {
-  fn valid_luhn(&self) -> bool {
-    self.to_string().valid_luhn()
-  }
-}
-impl ValidLuhn for u64 {
-  fn valid_luhn(&self) -> bool {
-    self.to_string().valid_luhn()
-  }
-}
-impl ValidLuhn for usize {
-  fn valid_luhn(&self) -> bool {
-    self.to_string().valid_luhn()
   }
 }
