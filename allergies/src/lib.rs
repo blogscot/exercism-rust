@@ -44,7 +44,7 @@ impl Allergies {
     self.allergies.contains(allergen)
   }
 
-  pub fn allergies(&self) -> &[Allergen] {
-    self.allergies.as_slice()
+  pub fn allergies(self) -> Vec<Allergen> {
+    self.allergies
   }
 }
