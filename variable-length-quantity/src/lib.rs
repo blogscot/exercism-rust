@@ -4,10 +4,10 @@ pub enum Error {
   Overflow,
 }
 
-pub fn to_bytes_helper(values: &[u32]) -> Vec<u32> {
+pub fn to_bytes_helper(values: &[u32]) -> Vec<u8> {
   let input = values[0];
   if input <= 127 {
-    return values.into();
+    return values.iter().map(|&value| value as u8).collect();
   }
   let binary_text = format!("{:01$b}", input, 8);
   let blocks = blockify(&binary_text);
@@ -20,7 +20,7 @@ pub fn to_bytes_helper(values: &[u32]) -> Vec<u32> {
 }
 
 /// Convert a list of numbers to a stream of bytes encoded with variable length encoding.
-pub fn to_bytes(values: &[u32]) -> Vec<u32> {
+pub fn to_bytes(values: &[u32]) -> Vec<u8> {
   values
     .into_iter()
     .flat_map(|value| to_bytes_helper(&[*value]))
@@ -32,8 +32,8 @@ pub fn from_bytes(bytes: &[u8]) -> Result<Vec<u32>, Error> {
   unimplemented!("Convert the list of bytes {:?} to a list of numbers", bytes)
 }
 
-fn to_hex(text: &str) -> u32 {
-  u32::from_str_radix(text, 2).unwrap()
+fn to_hex(text: &str) -> u8 {
+  u8::from_str_radix(text, 2).unwrap()
 }
 
 /// Pad string to be nicely divisible by block length.
