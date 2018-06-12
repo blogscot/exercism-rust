@@ -4,6 +4,16 @@ pub enum Error {
   Overflow,
 }
 
+
+
+/// Convert a list of numbers to a stream of bytes encoded with variable length encoding.
+pub fn to_bytes(values: &[u32]) -> Vec<u8> {
+  values
+    .into_iter()
+    .flat_map(|value| to_bytes_helper(&[*value]))
+    .collect()
+}
+
 pub fn to_bytes_helper(values: &[u32]) -> Vec<u8> {
   let input = values[0];
   if input <= 127 {
@@ -14,26 +24,43 @@ pub fn to_bytes_helper(values: &[u32]) -> Vec<u8> {
   let prefixed: Vec<String> = blocks.iter().map(|block| "1".to_string() + block).collect();
   let result = clear_last_block_prefix(prefixed);
   result.iter().fold(Vec::new(), |mut acc, elem| {
-    acc.push(to_hex(elem));
+    acc.push(to_hex(elem) as u8);
     acc
   })
 }
 
-/// Convert a list of numbers to a stream of bytes encoded with variable length encoding.
-pub fn to_bytes(values: &[u32]) -> Vec<u8> {
-  values
-    .into_iter()
-    .flat_map(|value| to_bytes_helper(&[*value]))
-    .collect()
-}
-
 /// Given a stream of bytes, extract all numbers which are encoded in there.
-pub fn from_bytes(bytes: &[u8]) -> Result<Vec<u32>, Error> {
-  unimplemented!("Convert the list of bytes {:?} to a list of numbers", bytes)
+pub fn from_bytes(values: &[u8]) -> Result<Vec<u32>, Error> {
+  let mut result = vec![];
+  let mut blocks = vec![];
+  for &value in values {
+    if value > 0x7f {
+      blocks.push(value);
+    } else {
+      blocks.push(value);
+      result.push(from_bytes_helper(&blocks));
+      blocks = vec![];
+    }
+  }
+  let flattened: Vec<u32> = result.into_iter().flat_map(|x| x).collect();
+  Ok(flattened)
 }
 
-fn to_hex(text: &str) -> u8 {
-  u8::from_str_radix(text, 2).unwrap()
+pub fn from_bytes_helper(bytes: &[u8]) -> Vec<u32> {
+  let result = bytes
+    .iter()
+    .map(|value| format!("{:01$b}", value, 8))
+    .map(|text| {
+      let (_, tail) = text.split_at(1);
+      tail.to_string()
+    })
+    .collect::<Vec<String>>()
+    .concat();
+  vec![to_hex(&result)]
+}
+
+fn to_hex(text: &str) -> u32 {
+  u32::from_str_radix(text, 2).unwrap()
 }
 
 /// Pad string to be nicely divisible by block length.
