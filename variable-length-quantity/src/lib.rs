@@ -21,13 +21,13 @@ pub fn to_bytes(values: &[u32]) -> Vec<u8> {
 
 pub fn to_bytes_helper(values: &[u32]) -> Vec<u8> {
   let input = values[0];
-  if input <= VLQ_END_MARKER as u32 {
+  if input <= u32::from(VLQ_END_MARKER) {
     return values.iter().map(|&value| value as u8).collect();
   }
   let binary_text = format!("{:01$b}", input, LEADING_ZEROS_LEN);
   let blocks = blockify(&binary_text);
   let prefixed: Vec<String> = blocks.iter().map(|block| "1".to_string() + block).collect();
-  let result = clear_last_block_prefix(prefixed);
+  let result = clear_last_block_prefix(&prefixed);
   result.iter().fold(Vec::new(), |mut acc, elem| {
     acc.push(to_hex(elem) as u8);
     acc
@@ -36,6 +36,10 @@ pub fn to_bytes_helper(values: &[u32]) -> Vec<u8> {
 
 /// Given a stream of bytes, extract all numbers which are encoded in there.
 pub fn from_bytes(values: &[u8]) -> Result<Vec<u32>, Error> {
+  if !values.is_empty() && *values.last().unwrap() > VLQ_END_MARKER {
+    return Err(Error::IncompleteNumber);
+  }
+
   let mut result = vec![];
   let mut blocks = vec![];
   for &value in values {
@@ -43,7 +47,7 @@ pub fn from_bytes(values: &[u8]) -> Result<Vec<u32>, Error> {
       blocks.push(value);
     } else {
       blocks.push(value);
-      if blocks.len() >= MAX_BLOCKS && blocks.first().unwrap() > &MAX_FIRST_BLOCK {
+      if blocks.len() >= MAX_BLOCKS && *blocks.first().unwrap() > MAX_FIRST_BLOCK {
         return Err(Error::Overflow);
       }
       result.push(from_bytes_helper(&blocks));
@@ -97,8 +101,8 @@ fn blockify(text: &str) -> Vec<String> {
 }
 
 // The final binary block is indicated by a '0' prefix.
-fn clear_last_block_prefix(blocks: Vec<String>) -> Vec<String> {
-  let mut blocks = blocks.clone();
+fn clear_last_block_prefix(blocks: &[String]) -> Vec<String> {
+  let mut blocks = blocks.to_owned();
   let reverse = |text: String| text.chars().rev().collect();
   let last = blocks.pop().unwrap();
   let mut reversed: String = reverse(last);

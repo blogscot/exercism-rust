@@ -101,17 +101,14 @@ fn overflow_u32() {
     );
 }
 #[test]
-#[ignore]
 fn incomplete_byte_sequence() {
     assert_eq!(Err(vlq::Error::IncompleteNumber), vlq::from_bytes(&[0xff]));
 }
 
 #[test]
-#[ignore]
 fn zero_incomplete_byte_sequence() {
     assert_eq!(Err(vlq::Error::IncompleteNumber), vlq::from_bytes(&[0x80]));
 }
-
 
 #[test]
 fn chained_execution_is_identity() {
