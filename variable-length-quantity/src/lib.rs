@@ -4,7 +4,12 @@ pub enum Error {
   Overflow,
 }
 
-
+const MAX_FIRST_BLOCK: u8 = 0x8f;
+const VLQ_END_MARKER: u8 = 0x7f;
+const VLQ_BLOCK_LEN: usize = 7;
+const MAX_BLOCKS: usize = 5;
+const BINARY_RADIX: u32 = 2;
+const LEADING_ZEROS_LEN: usize = 8;
 
 /// Convert a list of numbers to a stream of bytes encoded with variable length encoding.
 pub fn to_bytes(values: &[u32]) -> Vec<u8> {
@@ -16,10 +21,10 @@ pub fn to_bytes(values: &[u32]) -> Vec<u8> {
 
 pub fn to_bytes_helper(values: &[u32]) -> Vec<u8> {
   let input = values[0];
-  if input <= 127 {
+  if input <= VLQ_END_MARKER as u32 {
     return values.iter().map(|&value| value as u8).collect();
   }
-  let binary_text = format!("{:01$b}", input, 8);
+  let binary_text = format!("{:01$b}", input, LEADING_ZEROS_LEN);
   let blocks = blockify(&binary_text);
   let prefixed: Vec<String> = blocks.iter().map(|block| "1".to_string() + block).collect();
   let result = clear_last_block_prefix(prefixed);
@@ -34,10 +39,13 @@ pub fn from_bytes(values: &[u8]) -> Result<Vec<u32>, Error> {
   let mut result = vec![];
   let mut blocks = vec![];
   for &value in values {
-    if value > 0x7f {
+    if value > VLQ_END_MARKER {
       blocks.push(value);
     } else {
       blocks.push(value);
+      if blocks.len() >= MAX_BLOCKS && blocks.first().unwrap() > &MAX_FIRST_BLOCK {
+        return Err(Error::Overflow);
+      }
       result.push(from_bytes_helper(&blocks));
       blocks = vec![];
     }
@@ -49,7 +57,7 @@ pub fn from_bytes(values: &[u8]) -> Result<Vec<u32>, Error> {
 pub fn from_bytes_helper(bytes: &[u8]) -> Vec<u32> {
   let result = bytes
     .iter()
-    .map(|value| format!("{:01$b}", value, 8))
+    .map(|value| format!("{:01$b}", value, LEADING_ZEROS_LEN))
     .map(|text| {
       let (_, tail) = text.split_at(1);
       tail.to_string()
@@ -60,13 +68,13 @@ pub fn from_bytes_helper(bytes: &[u8]) -> Vec<u32> {
 }
 
 fn to_hex(text: &str) -> u32 {
-  u32::from_str_radix(text, 2).unwrap()
+  u32::from_str_radix(text, BINARY_RADIX).unwrap()
 }
 
 /// Pad string to be nicely divisible by block length.
 fn pad(input: &str) -> String {
   let mut text = input.to_string();
-  while text.len() % 7 != 0 {
+  while text.len() % VLQ_BLOCK_LEN != 0 {
     text = "0".to_string() + &text;
   }
   text
@@ -78,7 +86,7 @@ fn blockify(text: &str) -> Vec<String> {
   let mut input = binary.as_str();
   let mut blocks = vec![];
   loop {
-    let (block, rest) = input.split_at(7);
+    let (block, rest) = input.split_at(VLQ_BLOCK_LEN);
     blocks.push(block.into());
     if rest.is_empty() {
       break;

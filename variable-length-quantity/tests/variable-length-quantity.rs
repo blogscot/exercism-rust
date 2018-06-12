@@ -94,7 +94,6 @@ fn from_bytes_multiple_values() {
 }
 
 #[test]
-#[ignore]
 fn overflow_u32() {
     assert_eq!(
         Err(vlq::Error::Overflow),
