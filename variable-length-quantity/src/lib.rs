@@ -6,10 +6,11 @@ pub enum Error {
 
 const MAX_FIRST_BLOCK: u8 = 0x8f;
 const VLQ_END_MARKER: u8 = 0x7f;
-const VLQ_BLOCK_LEN: usize = 7;
 const MAX_BLOCKS: usize = 5;
-const BINARY_RADIX: u32 = 2;
-const LEADING_ZEROS_LEN: usize = 8;
+const U8_BIT_MASK: u8 = 0x7f;
+const U32_BIT_MASK: u32 = 0x7f;
+const BIT_EIGHT: u8 = 0x80;
+const SEVEN_BITS: u32 = 7;
 
 /// Convert a list of numbers to a stream of bytes encoded with variable length encoding.
 pub fn to_bytes(values: &[u32]) -> Vec<u8> {
@@ -19,19 +20,25 @@ pub fn to_bytes(values: &[u32]) -> Vec<u8> {
     .collect()
 }
 
-pub fn to_bytes_helper(values: &[u32]) -> Vec<u8> {
-  let input = values[0];
-  if input <= u32::from(VLQ_END_MARKER) {
-    return values.iter().map(|&value| value as u8).collect();
+fn to_bytes_helper(values: &[u32]) -> Vec<u8> {
+  let mut num: u32 = values[0];
+  if num == 0 {
+    return vec![0u8];
   }
-  let binary_text = format!("{:01$b}", input, LEADING_ZEROS_LEN);
-  let blocks = blockify(&binary_text);
-  let prefixed: Vec<String> = blocks.iter().map(|block| "1".to_string() + block).collect();
-  let result = clear_last_block_prefix(&prefixed);
-  result.iter().fold(Vec::new(), |mut acc, elem| {
-    acc.push(to_hex(elem) as u8);
-    acc
-  })
+  let mut octets = vec![];
+  let mut first_octet = true;
+
+  while num > 0 {
+    if first_octet {
+      octets.push(num as u8 & U8_BIT_MASK);
+      first_octet = false;
+    } else {
+      octets.push(num as u8 | BIT_EIGHT);
+    }
+    num >>= SEVEN_BITS;
+  }
+  octets.reverse();
+  octets
 }
 
 /// Given a stream of bytes, extract all numbers which are encoded in there.
@@ -59,56 +66,15 @@ pub fn from_bytes(values: &[u8]) -> Result<Vec<u32>, Error> {
 }
 
 pub fn from_bytes_helper(bytes: &[u8]) -> Vec<u32> {
-  let result = bytes
-    .iter()
-    .map(|value| format!("{:01$b}", value, LEADING_ZEROS_LEN))
-    .map(|text| {
-      let (_, tail) = text.split_at(1);
-      tail.to_string()
-    })
-    .collect::<Vec<String>>()
-    .concat();
-  vec![to_hex(&result)]
-}
-
-fn to_hex(text: &str) -> u32 {
-  u32::from_str_radix(text, BINARY_RADIX).unwrap()
-}
-
-/// Pad string to be nicely divisible by block length.
-fn pad(input: &str) -> String {
-  let mut text = input.to_string();
-  while text.len() % VLQ_BLOCK_LEN != 0 {
-    text = "0".to_string() + &text;
+  let mut shift_left = 0;
+  let mut result: u32 = 0;
+  let mut octets: Vec<u8> = bytes.to_vec();
+  octets.reverse();
+  for octet in octets {
+    let mut tmp = octet as u32 & U32_BIT_MASK;
+    tmp <<= shift_left;
+    shift_left += SEVEN_BITS;
+    result += tmp;
   }
-  text
-}
-
-// Turn binary digits into blocks of 7 digits
-fn blockify(text: &str) -> Vec<String> {
-  let binary = pad(text);
-  let mut input = binary.as_str();
-  let mut blocks = vec![];
-  loop {
-    let (block, rest) = input.split_at(VLQ_BLOCK_LEN);
-    blocks.push(block.into());
-    if rest.is_empty() {
-      break;
-    }
-    input = rest;
-  }
-  blocks
-}
-
-// The final binary block is indicated by a '0' prefix.
-fn clear_last_block_prefix(blocks: &[String]) -> Vec<String> {
-  let mut blocks = blocks.to_owned();
-  let reverse = |text: String| text.chars().rev().collect();
-  let last = blocks.pop().unwrap();
-  let mut reversed: String = reverse(last);
-  reversed.pop();
-  reversed.push('0');
-  let cleared: String = reverse(reversed);
-  blocks.push(cleared);
-  blocks
+  vec![result]
 }
