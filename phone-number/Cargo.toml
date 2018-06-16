@@ -1,0 +1,6 @@
+[package]
+name = "phone-number"
+version = "1.2.0"
+
+[dependencies]
+regex = "0.2"
