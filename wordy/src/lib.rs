@@ -74,21 +74,21 @@ impl Parser {
   pub fn parse(&mut self) -> Result<i32, String> {
     // start reading tokens
     self.current_token = self.lexer.get_next_token()?;
-    let mut total = self.value();
+    let mut total = self.value()?;
     while self.get_current_token() != End {
       let op = self.get_current_token();
       self.consume(&op)?;
 
-      let next = self.value();
+      let next = self.value()?;
       total = match op {
-        Plus => Ok(total? + next?),
-        Minus => Ok(total? - next?),
-        Multiply => Ok(total? * next?),
-        Divide => Ok(total? / next?),
+        Plus => total + next,
+        Minus => total - next,
+        Multiply => total * next,
+        Divide => total / next,
         _ => return Err(format!("Unexpected operator {:?}", op)),
       }
     }
-    total
+    Ok(total)
   }
 }
 
