@@ -2,12 +2,12 @@ use std::collections::HashMap;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Token {
-  Start,
   Plus,
   Minus,
   Divide,
   Multiply,
   Value(String),
+  Raised,
   End,
 }
 
@@ -85,6 +85,7 @@ impl Parser {
         Minus => total - next,
         Multiply => total * next,
         Divide => total / next,
+        Raised => total.pow(next as u32),
         _ => return Err(format!("Unexpected operator {:?}", op)),
       }
     }
@@ -108,6 +109,7 @@ impl Lexer {
       ("minus", Minus),
       ("divided by", Divide),
       ("multiplied by", Multiply),
+      ("raised to the", Raised),
     ].iter()
       .cloned()
       .collect();
@@ -150,7 +152,11 @@ impl Lexer {
       self.advance();
     }
     if self.reserved_words.contains_key(result.trim()) {
-      Ok(self.reserved_words.get(result.trim()).cloned())
+      let token = self.reserved_words.get(result.trim()).cloned();
+      if let Some(Raised) = token {
+        self.position += "th power".len();
+      }
+      Ok(token)
     } else {
       Err(format!("Invalid token found {}", result))
     }

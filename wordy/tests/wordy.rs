@@ -87,6 +87,18 @@ fn multiple_divisions() {
 }
 
 #[test]
+fn raised_to_power() {
+    let command = "What is 2 raised to the 5th power?";
+    assert_eq!(Ok(32), WordProblem::new(command).answer());
+}
+
+#[test]
+fn raised_to_multiple_powers() {
+    let command = "What is 2 raised to the 2nd power raised to the 2nd power?";
+    assert_eq!(Ok(16), WordProblem::new(command).answer());
+}
+
+#[test]
 fn unknown_operation() {
     let command = "What is 52 cubed?";
     assert!(WordProblem::new(command).answer().is_err());
