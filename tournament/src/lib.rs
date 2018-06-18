@@ -84,10 +84,9 @@ impl Tournament {
     self.clone()
   }
   fn get_team(&mut self, team: &str) -> Team {
-    if self.teams.contains_key(team) {
-      (&self.teams[team]).clone()
-    } else {
-      Team::new(team)
+    match self.teams.get(team) {
+      Some(value) => value.clone(),
+      None => Team::new(team),
     }
   }
   fn parse_match_result(&mut self, input: &str) {
