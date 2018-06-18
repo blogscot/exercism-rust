@@ -32,7 +32,6 @@ impl Team {
       score: 0,
     }
   }
-
   fn set_match_result(&mut self, result: &MatchResult) {
     self.played += 1;
     match result {
@@ -46,6 +45,12 @@ impl Team {
       }
       Lost => self.lost += 1,
     }
+  }
+  fn to_row(&self) -> String {
+    format!(
+      "{:<30 } |  {} |  {} |  {} |  {} |  {}",
+      self.name, self.played, self.won, self.drawn, self.lost, self.score
+    )
   }
 }
 
@@ -117,14 +122,10 @@ impl Tournament {
     let mut output: Vec<String> = vec![];
     output.push(HEADER.to_string());
     let mut sorted: Vec<_> = self.teams.values().cloned().collect();
-
     sorted.sort_by(|a, b| b.cmp(&a));
 
     for team in &sorted {
-      output.push(format!(
-        "{:<30 } |  {} |  {} |  {} |  {} |  {}",
-        team.name, team.played, team.won, team.drawn, team.lost, team.score
-      ));
+      output.push(team.to_row());
     }
     output.join("\n")
   }
