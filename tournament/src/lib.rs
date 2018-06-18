@@ -58,6 +58,7 @@ impl Ord for Team {
   }
 }
 
+#[derive(Clone)]
 struct Tournament {
   matches: Vec<String>,
   teams: HashMap<String, Team>,
@@ -65,34 +66,33 @@ struct Tournament {
 
 impl Tournament {
   pub fn new(input: &str) -> Self {
-    let matches: Vec<&str> = input.split('\n').collect();
-    let matches: Vec<String> = matches.iter().map(|&str| str.to_string()).collect();
+    let matches: Vec<String> = input.split('\n').map(|str| str.to_string()).collect();
     Tournament {
       matches,
       teams: HashMap::new(),
     }
   }
-  fn parse_matches(&mut self) {
+  fn parse_matches(&mut self) -> Self {
     for match_result in self.matches.clone() {
       self.parse_match_result(&match_result);
+    }
+    self.clone()
+  }
+  fn get_team(&mut self, team: &str) -> Team {
+    if self.teams.contains_key(team) {
+      (&self.teams[team]).clone()
+    } else {
+      Team::new(team)
     }
   }
   fn parse_match_result(&mut self, input: &str) {
     let details: Vec<_> = input.split(';').collect::<Vec<_>>();
     let (home, away, result) = match *details.as_slice() {
       [home, away, result] => (home, away, result),
-      _ => ("", "", ""),
+      _ => panic!("Unable to parse input: `{}`", input),
     };
-    let mut home_team = if self.teams.contains_key(home) {
-      (&self.teams[home]).clone()
-    } else {
-      Team::new(home)
-    };
-    let mut away_team = if self.teams.contains_key(away) {
-      (&self.teams[away]).clone()
-    } else {
-      Team::new(away)
-    };
+    let mut home_team = self.get_team(&home);
+    let mut away_team = self.get_team(&away);
     match result {
       "win" => {
         home_team.set_match_result(&Won);
@@ -134,7 +134,7 @@ pub fn tally(input: &str) -> String {
   if input.is_empty() {
     return HEADER.to_string();
   }
-  let mut tournament = Tournament::new(&input);
-  tournament.parse_matches();
-  tournament.construct_results_table()
+  Tournament::new(&input)
+    .parse_matches()
+    .construct_results_table()
 }
