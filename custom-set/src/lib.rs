@@ -77,10 +77,10 @@ where
       })
   }
   pub fn union(&self, other: &Self) -> Self {
-    let mut output = self.values.clone();
-    output.extend(other.values.clone());
-    output.sort();
-    output.dedup();
-    CustomSet { values: output }
+    let mut values = self.values.clone();
+    values.extend(other.values.clone());
+    values.sort();
+    values.dedup();
+    CustomSet { values }
   }
 }
