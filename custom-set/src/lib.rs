@@ -1,17 +1,17 @@
-#[derive(Debug, PartialEq)]
-pub struct CustomSet<T> {
+#[derive(Debug)]
+pub struct CustomSet<T: PartialEq + Clone> {
   values: Vec<T>,
 }
 
 impl<T> CustomSet<T>
 where
-  T: Clone + PartialEq + Ord,
+  T: Clone + PartialEq,
 {
   pub fn new(input: &[T]) -> Self {
     let mut custom_set = CustomSet { values: vec![] };
     for item in input {
       custom_set.add(item.clone());
-  }
+    }
     custom_set
   }
   pub fn is_empty(&self) -> bool {
@@ -32,11 +32,10 @@ where
   }
   pub fn is_disjoint(&self, other: &Self) -> bool {
     self.intersection(other).is_empty()
-    }
+  }
   pub fn add(&mut self, new_value: T) {
     if !self.values.contains(&new_value) {
-    self.values.push(new_value);
-    self.values.sort();
+      self.values.push(new_value);
     }
   }
   pub fn intersection(&self, other: &Self) -> Self {
@@ -74,8 +73,12 @@ where
   pub fn union(&self, other: &Self) -> Self {
     let mut values = self.values.clone();
     values.extend(other.values.clone());
-    values.sort();
-    values.dedup();
     CustomSet { values }
+  }
+}
+
+impl<T: PartialEq + Clone> PartialEq for CustomSet<T> {
+  fn eq(&self, other: &CustomSet<T>) -> bool {
+    self.is_subset(other) && other.is_subset(&self)
   }
 }
