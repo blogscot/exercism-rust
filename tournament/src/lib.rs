@@ -56,10 +56,10 @@ impl Team {
 
 impl Ord for Team {
   fn cmp(&self, other: &Team) -> Ordering {
-    match self.score.cmp(&other.score) {
-      Ordering::Equal => other.name.cmp(&self.name),
-      order => order,
-    }
+    self
+      .score
+      .cmp(&other.score)
+      .then(other.name.cmp(&self.name))
   }
 }
 
