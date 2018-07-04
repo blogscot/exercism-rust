@@ -96,14 +96,7 @@ impl Iterator for Matrix {
 }
 
 pub fn spiral_matrix(size: usize) -> Vec<Vec<usize>> {
-  let mut spiral_matrix = vec![];
-  let mut row: Vec<usize> = vec![];
-  for _ in 0..size {
-    row.push(0);
-  }
-  for _ in 0..size {
-    spiral_matrix.push(row.clone());
-  }
+  let mut spiral_matrix: Vec<Vec<usize>> = vec![vec![0; size]; size];
 
   let matrix = Matrix::new(size);
   for (index, (row, col)) in matrix.enumerate() {
