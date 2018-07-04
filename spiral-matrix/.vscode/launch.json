@@ -1,0 +1,76 @@
+{
+  // Use IntelliSense para saber los atributos posibles.
+  // Mantenga el puntero para ver las descripciones de los existentes atributos 
+  // Para más información, visite: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug tests in spiral-matrix",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--lib"
+        ]
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug spiral-matrix",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=spiral-matrix"
+        ]
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug tests in spiral-matrix",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--bin=spiral-matrix"
+        ]
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug spiral-matrix",
+      "cargo": {
+        "args": [
+          "build",
+          "--test=spiral-matrix"
+        ]
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug tests in spiral-matrix",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--test=spiral-matrix"
+        ]
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
