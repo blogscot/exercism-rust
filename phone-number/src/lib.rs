@@ -4,7 +4,14 @@ use regex::Regex;
 
 pub fn number(text: &str) -> Option<String> {
   let re = Regex::new(
-    r"^[+1]?1?\s*[(]?(?P<area>[2-9]\d{2})[)]?[ -.]*(?P<exchange>[2-9]\d{2})[ -.]*(?P<subscriber>\d{4})\s*$",
+    r"(?x)                      # Free Spacing Mode
+  ^[+1]?1?\s*[(]?
+  (?P<area>[2-9]\d{2})[)]?      # Area
+  \s*[-.]*
+  (?P<exchange>[2-9]\d{2})      # Exchange
+  \s*[-.]*
+  (?P<subscriber>\d{4})         # Subscriber
+  \s*$",
   ).unwrap();
 
   match re.captures(text) {
