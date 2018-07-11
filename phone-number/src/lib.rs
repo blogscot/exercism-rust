@@ -5,8 +5,10 @@ use regex::Regex;
 pub fn number(text: &str) -> Option<String> {
   let re = Regex::new(
     r"(?x)                      # Free Spacing Mode
-  ^[+1]?1?\s*[(]?
-  (?P<area>[2-9]\d{2})[)]?      # Area
+  ^[+1]?1?\s*
+  [(]?
+  (?P<area>[2-9]\d{2})          # Area
+  [)]?
   \s*[-.]*
   (?P<exchange>[2-9]\d{2})      # Exchange
   \s*[-.]*
