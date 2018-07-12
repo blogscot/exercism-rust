@@ -20,8 +20,8 @@ enum HandType {
 use hand::HandType::*;
 
 #[derive(Debug, PartialEq)]
-pub struct Hand {
-  text: String,
+pub struct Hand<'a> {
+  pub text: &'a str,
   cards: Vec<Card>,
   groups: Vec<Group>,
   singles: Vec<u32>,
@@ -37,7 +37,7 @@ impl PartialOrd for Group {
   }
 }
 
-impl PartialOrd for Hand {
+impl<'a> PartialOrd for Hand<'a> {
   fn partial_cmp(&self, other: &Hand) -> Option<Ordering> {
     Some(
       self
@@ -134,9 +134,8 @@ fn classify(mut cards: &mut [Card]) -> HandType {
   }
 }
 
-impl<'a> From<&'a str> for Hand {
-  fn from(text: &str) -> Self {
-    let text = text.to_string();
+impl<'a> From<&'a str> for Hand<'a> {
+  fn from(text: &'a str) -> Self {
     let mut cards: Vec<Card> = text.split_whitespace().map(|text| text.into()).collect();
     let hand_type = classify(&mut cards);
     let groups = find_groups(&cards);

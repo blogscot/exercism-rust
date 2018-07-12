@@ -36,7 +36,6 @@ fn test_highest_card_of_all_hands_wins() {
 }
 
 #[test]
-#[ignore]
 fn test_a_tie_has_multiple_winners() {
   test(
     &[
