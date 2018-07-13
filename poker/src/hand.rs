@@ -53,15 +53,9 @@ fn find_groups(cards: &[Card]) -> CardGroups {
   let empty_map: CardGroups = HashMap::new();
   cards.iter().cloned().fold(empty_map, |mut acc, card| {
     let value = card.value.clone() as u32;
-    if acc.contains_key(&value) {
-      acc.get_mut(&value).and_then(|contents| {
-        contents.push(card);
-        Some(contents)
-      });
-    } else {
-      let mut contents = vec![];
+    {
+      let contents = acc.entry(value).or_insert_with(Vec::new);
       contents.push(card);
-      acc.insert(value, contents);
     }
     acc
   })
