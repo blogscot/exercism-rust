@@ -61,13 +61,13 @@ fn find_groups(cards: &[Card]) -> CardGroups {
   })
 }
 
-fn is_straight_helper(values: &[Value]) -> bool {
+fn is_straight_helper(cards: &[Card]) -> bool {
   let mut index = 0;
-  let mut value = values[index].clone() as u32;
+  let mut value = cards[index].value.clone() as u32;
   while index < 4 {
     index += 1;
     value += 1;
-    if values[index].clone() as u32 != value {
+    if cards[index].value.clone() as u32 != value {
       return false;
     }
   }
@@ -76,17 +76,19 @@ fn is_straight_helper(values: &[Value]) -> bool {
 
 fn is_straight(cards: &mut [Card]) -> bool {
   cards.sort();
-  let mut values: Vec<Value> = cards.iter().cloned().map(|card| card.value).collect();
-  if is_straight_helper(&values) {
+  let mut test_cards = cards.to_vec();
+  if is_straight_helper(&cards) {
     return true;
   }
-  let ace_high_position = cards.iter().position(|card| card.value == Value::AceHigh);
+  let ace_high_position = test_cards
+    .iter()
+    .position(|card| card.value == Value::AceHigh);
   match ace_high_position {
     None => false,
     Some(position) => {
-      values[position] = Value::AceLow;
-      values.sort();
-      if is_straight_helper(&values) {
+      test_cards[position].value = Value::AceLow;
+      test_cards.sort();
+      if is_straight_helper(&test_cards) {
         cards[position].value = Value::AceLow;
         cards.sort();
         true
