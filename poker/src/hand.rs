@@ -1,8 +1,8 @@
-use card::{Card, Value};
+use card::{Card, Rank};
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
-type CardGroups = HashMap<u32, Vec<Card>>;
+type CardGroups = HashMap<u8, Vec<Card>>;
 
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
 enum HandType {
@@ -24,12 +24,12 @@ pub struct Hand<'a> {
   pub text: &'a str,
   cards: Vec<Card>,
   groups: Vec<Group>,
-  singles: Vec<u32>,
+  singles: Vec<u8>,
   hand_type: HandType,
 }
 
 #[derive(Debug, PartialEq, Eq, Ord)]
-struct Group(HandType, u32);
+struct Group(HandType, u8);
 
 impl PartialOrd for Group {
   fn partial_cmp(&self, other: &Group) -> Option<Ordering> {
@@ -52,9 +52,9 @@ impl<'a> PartialOrd for Hand<'a> {
 fn find_groups(cards: &[Card]) -> CardGroups {
   let empty_map: CardGroups = HashMap::new();
   cards.iter().cloned().fold(empty_map, |mut acc, card| {
-    let value = card.value.clone() as u32;
+    let rank = card.to_u8();
     {
-      let contents = acc.entry(value).or_insert_with(Vec::new);
+      let contents = acc.entry(rank).or_insert_with(Vec::new);
       contents.push(card);
     }
     acc
@@ -63,11 +63,11 @@ fn find_groups(cards: &[Card]) -> CardGroups {
 
 fn is_straight_helper(cards: &[Card]) -> bool {
   let mut index = 0;
-  let mut value = cards[index].value.clone() as u32;
+  let mut value = cards[index].to_u8();
   while index < 4 {
     index += 1;
     value += 1;
-    if cards[index].value.clone() as u32 != value {
+    if cards[index].to_u8() != value {
       return false;
     }
   }
@@ -80,16 +80,14 @@ fn is_straight(cards: &mut [Card]) -> bool {
   if is_straight_helper(&cards) {
     return true;
   }
-  let ace_high_position = test_cards
-    .iter()
-    .position(|card| card.value == Value::AceHigh);
+  let ace_high_position = test_cards.iter().position(|card| card.rank == Rank::Ace);
   match ace_high_position {
     None => false,
     Some(position) => {
-      test_cards[position].value = Value::AceLow;
+      test_cards[position].rank = Rank::N(1);
       test_cards.sort();
       if is_straight_helper(&test_cards) {
-        cards[position].value = Value::AceLow;
+        cards[position].rank = Rank::N(1);
         cards.sort();
         true
       } else {
@@ -138,12 +136,12 @@ impl<'a> From<&'a str> for Hand<'a> {
     let (groups, singles): (CardGroups, CardGroups) =
       groups.into_iter().partition(|(_, values)| values.len() > 1);
 
-    let (groups, singles): (Vec<Group>, Vec<u32>) = match hand_type {
+    let (groups, singles): (Vec<Group>, Vec<u8>) = match hand_type {
       Straight | Flush | StraightFlush => {
-        let singles: Vec<u32> = cards
+        let singles: Vec<u8> = cards
           .iter()
           .cloned()
-          .map(|card| card.value as u32)
+          .map(|card| card.to_u8())
           .rev()
           .collect();
         (Vec::new(), singles)
@@ -153,7 +151,7 @@ impl<'a> From<&'a str> for Hand<'a> {
           .into_iter()
           .map(|(key, mut cards)| Group(classify(&mut cards), key))
           .collect();
-        let mut singles: Vec<u32> = singles.keys().cloned().collect();
+        let mut singles: Vec<u8> = singles.keys().cloned().collect();
         groups.sort();
         singles.sort();
         groups = groups.into_iter().rev().collect();
