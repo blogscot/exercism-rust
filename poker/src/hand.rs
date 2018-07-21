@@ -152,10 +152,8 @@ impl<'a> From<&'a str> for Hand<'a> {
           .map(|(key, mut cards)| Group(classify(&mut cards), key))
           .collect();
         let mut singles: Vec<u8> = singles.keys().cloned().collect();
-        groups.sort();
-        singles.sort();
-        groups = groups.into_iter().rev().collect();
-        singles = singles.into_iter().rev().collect();
+        groups.sort_by(|a, b| b.cmp(&a));
+        singles.sort_by(|a, b| b.cmp(&a));
         (groups, singles)
       }
     };
