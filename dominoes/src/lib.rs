@@ -34,23 +34,21 @@ struct Dominoes {
 
 impl Dominoes {
   fn new(input: &[Domino]) -> Self {
-    let available = input.to_vec();
-    let allocated = Vec::new();
     Dominoes {
-      available,
-      allocated,
+      available: input.to_vec(),
+      allocated: Vec::new(),
     }
   }
   fn sequence_dominoes(&self, start: usize) -> Option<Self> {
-    let first_dom = self.available[start];
-    Self::sequence_helper(first_dom, self.available.clone(), self.allocated.clone())
+    let first_domino = self.available[start];
+    Self::sequence_helper(first_domino, self.available.clone(), self.allocated.clone())
   }
   fn sequence_helper(
-    current_dom: Domino,
+    current_domino: Domino,
     available: Vec<Domino>,
     allocated: Vec<Domino>,
   ) -> Option<Self> {
-    let neighbours = Self::find_neighbours(&available, current_dom.1);
+    let neighbours = Self::find_neighbours(&available, current_domino.1);
     if neighbours.is_empty() {
       return Some(Dominoes {
         available,
@@ -59,11 +57,11 @@ impl Dominoes {
     }
     let results: Vec<Option<Self>> = neighbours
       .into_iter()
-      // Recurse the list of dominoes until there is no more
+      // Recurse the list of dominoes until there are no more
       // left to play
       .map(|neighbour| {
         let mut next_domino = available[neighbour];
-        if current_dom.1 != next_domino.0 {
+        if current_domino.1 != next_domino.0 {
           next_domino = Self::reverse_domino(next_domino);
         }
         let Dominoes {
@@ -86,8 +84,6 @@ impl Dominoes {
   }
   /**
    * Returns a list of neighbours for the given domino.
-   * Assumes that the given domino has already been removed
-   * from the list of candidates.
    */
   fn find_neighbours(available: &[Domino], dots: usize) -> Vec<usize> {
     let mut matches = vec![];
