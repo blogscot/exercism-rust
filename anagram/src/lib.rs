@@ -1,8 +1,7 @@
 use std::collections::HashSet;
 
 pub fn anagrams_for<'a>(word: &str, possible_anagrams: &'a [&str]) -> HashSet<&'a str> {
-  let anagrams = possible_anagrams.to_vec();
-  anagrams
+  possible_anagrams
     .iter()
     .cloned()
     .filter(|&anagram| anagram.to_lowercase() != word.to_lowercase() && compare(anagram, word))
