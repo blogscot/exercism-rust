@@ -59,6 +59,8 @@ impl Dominoes {
     }
     let results: Vec<Option<Self>> = neighbours
       .into_iter()
+      // Recurse the list of dominoes until there is no more
+      // left to play
       .map(|neighbour| {
         let mut next_domino = available[neighbour];
         if current_dom.1 != next_domino.0 {
@@ -68,23 +70,25 @@ impl Dominoes {
           available,
           allocated,
         } = Self::play_domino(&next_domino, &available, &allocated);
-        let tmp = Self::sequence_helper(next_domino, available, allocated);
-        tmp
+        Self::sequence_helper(next_domino, available, allocated)
       })
-      .collect();
-    let new_results: Vec<Option<Self>> = results
-      .iter()
-      .cloned()
+      // Remove non-solutions
       .filter(|result| match result {
         Some(value) => value.available.is_empty(),
         None => false,
       })
       .collect();
-    match new_results.get(0) {
+    // Return the first solution
+    match results.get(0) {
       None => None,
       Some(value) => Some(value.clone().unwrap()),
     }
   }
+  /**
+   * Returns a list of neighbours for the given domino.
+   * Assumes that the given domino has already been removed
+   * from the list of candidates.
+   */
   fn find_neighbours(available: &[Domino], dots: usize) -> Vec<usize> {
     let mut matches = vec![];
     for (index, domino) in available.iter().enumerate() {
@@ -96,29 +100,26 @@ impl Dominoes {
     matches
   }
   /**
-   * Returns a list of neighbours for the given domino.
-   * Assumes that the given domino has already been removed
-   * from the list of candidates.
+   * Moves the given domino from available to allocated resource.
    */
   fn play_domino(domino: &Domino, available: &[Domino], allocated: &[Domino]) -> Self {
-    let mut new_allocated = allocated.to_vec();
-    new_allocated.push(*domino);
+    let mut allocated = allocated.to_vec();
+    allocated.push(*domino);
     let reversed_dom = Self::reverse_domino(*domino);
     let position = available
       .iter()
       .position(|&dom| dom == *domino || dom == reversed_dom)
       .unwrap();
-    let new_available = available
+    let available = available
       .iter()
       .enumerate()
       .filter_map(|(index, &value)| if index != position { Some(value) } else { None })
       .collect();
     Dominoes {
-      available: new_available,
-      allocated: new_allocated,
+      available,
+      allocated,
     }
   }
-
   fn start_and_end_dots_are_equal(&self) -> bool {
     let allocation = self.allocated.to_vec();
     let first_dom = allocation.first().unwrap();
