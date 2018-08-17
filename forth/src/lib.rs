@@ -51,23 +51,21 @@ impl Forth {
     self.stack.clone()
   }
 
-  fn filter_non_words(input: &str) -> String {
-    input.chars().fold(String::new(), |mut acc, chr| {
+  fn filter_words(input: &str) -> String {
+    input.chars().fold(String::new(), |acc, chr| {
       if chr.is_whitespace() || chr.is_control() {
-        acc = acc + &' '.to_string();
-        acc
+        acc + &' '.to_string()
       } else {
-        acc = acc + &chr.to_string();
-        acc
+        acc + &chr.to_string()
       }
     })
   }
 
   pub fn eval<'a>(&'a mut self, input: &'a str) -> ForthResult {
-    let mut input = Self::filter_non_words(input);
+    let mut input = Self::filter_words(input);
     while !input.is_empty() {
-      input = self.eval_digits(input);
-      input = self.eval_operators(input)?;
+      input = self.eval_digits(&input);
+      input = self.eval_operators(&input)?.to_string();
       input = self.eval_word_declarations(input)?;
       input = self.eval_word(&input)?;
       input = self.eval_commands(input)?;
@@ -75,15 +73,15 @@ impl Forth {
     Ok(())
   }
 
-  fn eval_digits(&mut self, mut input: String) -> String {
-    while let (Some(head), tail) = Self::parse_digit(input.clone()) {
+  fn eval_digits(&mut self, mut input: &str) -> String {
+    while let (Some(head), tail) = Self::parse_digit(&input.clone()) {
       self.stack.push(head);
-      input = tail.to_string();
+      input = tail;
     }
-    input
+    input.to_string()
   }
 
-  fn eval_operators(&mut self, mut input: String) -> Result<String, Error> {
+  fn eval_operators<'a>(&'a mut self, mut input: &'a str) -> Result<&'a str, Error> {
     while let (Some(operator), tail) = Self::parse_operator(&input) {
       let value2 = self.stack.pop()?;
       let value1 = self.stack.pop()?;
@@ -98,7 +96,7 @@ impl Forth {
         }
         Multiply => self.stack.push(value1 * value2),
       }
-      input = tail.to_string();
+      input = tail;
     }
     Ok(input)
   }
@@ -150,36 +148,36 @@ impl Forth {
     Ok(input)
   }
 
-  fn parse_digit(input: String) -> (Option<Value>, String) {
+  fn parse_digit(input: &str) -> (Option<Value>, &str) {
     match input.chars().position(|chr| chr.is_whitespace()) {
       Some(position) => {
         let head = &input[..position];
         let tail = &input[position..];
         if let Ok(value) = head.parse::<Value>() {
-          (Some(value), tail.trim_left().to_string())
+          (Some(value), tail.trim_left())
         } else {
-          (None, input.trim().to_string())
+          (None, input.trim())
         }
       }
       _ => match input.parse::<Value>() {
-        Ok(value) => (Some(value), "".to_string()),
+        Ok(value) => (Some(value), ""),
         _ => (None, input),
       },
     }
   }
 
-  fn parse_operator(input: &str) -> (Option<Operator>, String) {
+  fn parse_operator(input: &str) -> (Option<Operator>, &str) {
     if input.is_empty() {
-      return (None, "".to_string());
+      return (None, "");
     }
     let head = &input[..1];
     let tail = &input[1..].trim_left();
     match head {
-      "+" => (Some(Plus), tail.to_string()),
-      "-" => (Some(Minus), tail.to_string()),
-      "/" => (Some(Divide), tail.to_string()),
-      "*" => (Some(Multiply), tail.to_string()),
-      _ => (None, input.to_string()),
+      "+" => (Some(Plus), tail),
+      "-" => (Some(Minus), tail),
+      "/" => (Some(Divide), tail),
+      "*" => (Some(Multiply), tail),
+      _ => (None, input),
     }
   }
 
