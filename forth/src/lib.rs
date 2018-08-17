@@ -84,7 +84,7 @@ impl Forth {
   }
 
   fn eval_operators(&mut self, mut input: String) -> Result<String, Error> {
-    while let (Some(operator), tail) = Self::parse_operator(input.to_string()) {
+    while let (Some(operator), tail) = Self::parse_operator(&input) {
       let value2 = self.stack.pop()?;
       let value1 = self.stack.pop()?;
       match operator {
@@ -104,7 +104,7 @@ impl Forth {
   }
 
   fn eval_word_declarations(&mut self, mut input: String) -> Result<String, Error> {
-    while let (Some(Word((key, value))), tail) = Self::parse_word_delcaration(input.to_string())? {
+    while let (Some(Word((key, value))), tail) = Self::parse_word_delcaration(&input)? {
       self.words.insert(key, value);
       input = tail.to_string()
     }
@@ -119,7 +119,7 @@ impl Forth {
   }
 
   fn eval_commands(&mut self, mut input: String) -> Result<String, Error> {
-    while let (Some(command), tail) = Self::parse_command(input.to_string())? {
+    while let (Some(command), tail) = Self::parse_command(&input)? {
       match command {
         Swap => {
           let value2 = self.stack.pop()?;
@@ -168,7 +168,7 @@ impl Forth {
     }
   }
 
-  fn parse_operator(input: String) -> (Option<Operator>, String) {
+  fn parse_operator(input: &str) -> (Option<Operator>, String) {
     if input.is_empty() {
       return (None, "".to_string());
     }
@@ -183,7 +183,7 @@ impl Forth {
     }
   }
 
-  fn parse_command(input: String) -> Result<(Option<Command>, String), Error> {
+  fn parse_command(input: &str) -> Result<(Option<Command>, String), Error> {
     if input.is_empty() {
       return Ok((None, "".to_string()));
     }
@@ -205,7 +205,7 @@ impl Forth {
     }
   }
 
-  fn parse_word_delcaration(input: String) -> Result<(Option<Command>, String), Error> {
+  fn parse_word_delcaration(input: &str) -> Result<(Option<Command>, String), Error> {
     if input.is_empty() || input.chars().nth(0).unwrap() != ':' {
       return Ok((None, "".to_string()));
     }
