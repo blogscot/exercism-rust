@@ -74,7 +74,7 @@ impl Forth {
   }
 
   fn eval_digits(&mut self, mut input: &str) -> String {
-    while let (Some(head), tail) = Self::parse_digit(&input.clone()) {
+    while let (Some(head), tail) = Self::parse_digit(&input) {
       self.stack.push(head);
       input = tail;
     }
@@ -204,7 +204,7 @@ impl Forth {
   }
 
   fn parse_word_delcaration(input: &str) -> Result<(Option<Command>, String), Error> {
-    if input.is_empty() || input.chars().nth(0).unwrap() != ':' {
+    if !input.starts_with(':') {
       return Ok((None, "".to_string()));
     }
     let body = input
@@ -212,16 +212,8 @@ impl Forth {
       .skip(1)
       .take_while(|&chr| chr != ';')
       .collect::<String>()
-      .trim()
+      .trim_left()
       .to_string();
-    let rest = input
-      .chars()
-      .skip_while(|&chr| chr != ';')
-      .skip(1)
-      .collect::<String>()
-      .trim()
-      .to_string();
-
     let key: String = body.chars().take_while(|&chr| chr != ' ').collect();
     let value: String = body.chars().skip_while(|&chr| chr != ' ').skip(1).collect();
 
@@ -237,7 +229,16 @@ impl Forth {
       None => return Err(Error::InvalidWord),
     }
 
-    Ok((Some(Word((key.to_lowercase(), value))), rest))
+    let rest: String = input
+      .chars()
+      .skip_while(|&chr| chr != ';')
+      .skip(1)
+      .collect();
+
+    Ok((
+      Some(Word((key.to_lowercase(), value))),
+      rest.trim_left().to_string(),
+    ))
   }
 
   fn parse_word<'a>(&self, input: &'a str) -> (Option<String>, &'a str) {
