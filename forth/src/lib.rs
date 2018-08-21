@@ -1,5 +1,4 @@
 #![feature(try_trait)]
-#![allow(dead_code)]
 use std::{collections::HashMap, option::NoneError};
 use Command::*;
 use Operator::*;
@@ -70,8 +69,8 @@ impl Forth {
     while !self.text.is_empty() {
       self.eval_digits();
       self.eval_operators()?;
-      // input = self.eval_word_declarations(input)?;
-      // input = self.eval_word(&input)?;
+      self.eval_word_declarations()?;
+      self.eval_word()?;
       self.eval_commands()?;
     }
     Ok(())
@@ -83,7 +82,7 @@ impl Forth {
     }
   }
 
-  fn eval_operators<'b>(&'b mut self) -> Result<(), Error> {
+  fn eval_operators(&mut self) -> Result<(), Error> {
     while let Some(operator) = self.parse_operator() {
       let value2 = self.stack.pop()?;
       let value1 = self.stack.pop()?;
@@ -102,19 +101,18 @@ impl Forth {
     Ok(())
   }
 
-  fn eval_word_declarations(&mut self, mut input: String) -> Result<String, Error> {
-    while let (Some(Word((key, value))), tail) = Self::parse_word_delcaration(&input)? {
+  fn eval_word_declarations(&mut self) -> Result<(), Error> {
+    while let Some(Word((key, value))) = self.parse_word_delcaration()? {
       self.words.insert(key, value);
-      input = tail.to_string()
     }
-    Ok(input)
+    Ok(())
   }
 
-  fn eval_word(&mut self, input: &str) -> Result<String, Error> {
-    if let (Some(value), tail) = self.parse_word(input) {
-      return Ok(value + tail);
+  fn eval_word(&mut self) -> Result<(), Error> {
+    if let Some(value) = self.parse_word() {
+      self.text = value;
     }
-    Ok(input.to_string())
+    Ok(())
   }
 
   fn eval_commands(&mut self) -> Result<(), Error> {
@@ -236,9 +234,10 @@ impl Forth {
     }
   }
 
-  fn parse_word_delcaration(input: &str) -> Result<(Option<Command>, String), Error> {
+  fn parse_word_delcaration(&mut self) -> Result<Option<Command>, Error> {
+    let input = self.text.clone();
     if !input.starts_with(':') {
-      return Ok((None, "".to_string()));
+      return Ok(None);
     }
     let body = input
       .chars()
@@ -267,25 +266,24 @@ impl Forth {
       .skip_while(|&chr| chr != ';')
       .skip(1)
       .collect();
+    self.text = rest.trim_left().to_string();
 
-    Ok((
-      Some(Word((key.to_lowercase(), value))),
-      rest.trim_left().to_string(),
-    ))
+    Ok(Some(Word((key.to_lowercase(), value))))
   }
 
-  fn parse_word<'b>(&self, input: &'b str) -> (Option<String>, &'b str) {
-    let (head, tail) = match input.chars().position(|chr| chr.is_whitespace()) {
+  fn parse_word(&self) -> Option<String> {
+    let input = self.text.clone();
+    let (head, tail) = match self.text.chars().position(|chr| chr.is_whitespace()) {
       Some(position) => {
-        let head = &input[..position];
-        let tail = &input[position..];
+        let head = &input.as_str()[..position];
+        let tail = &input.as_str()[position..];
         (head, tail)
       }
-      None => (input, ""),
+      None => (input.as_str(), ""),
     };
     match self.words.get(&head.to_lowercase()) {
-      Some(value) => (Some(value.to_string() + tail), ""),
-      None => (None, input),
+      Some(value) => Some(value.to_string() + tail),
+      None => None,
     }
   }
 }
