@@ -1,4 +1,5 @@
 #![feature(try_trait)]
+#![allow(dead_code)]
 use std::{collections::HashMap, option::NoneError};
 use Command::*;
 use Operator::*;
@@ -39,6 +40,7 @@ impl From<NoneError> for Error {
 
 #[derive(Default, Debug)]
 pub struct Forth {
+  text: String,
   stack: Vec<i32>,
   words: HashMap<String, String>,
 }
@@ -51,38 +53,38 @@ impl Forth {
     self.stack.clone()
   }
 
-  fn filter_words(input: &str) -> String {
-    input.chars().fold(String::new(), |acc, chr| {
+  fn filter_words(&mut self) {
+    let filtered = self.text.chars().fold(String::new(), |acc, chr| {
       if chr.is_whitespace() || chr.is_control() {
         acc + &' '.to_string()
       } else {
         acc + &chr.to_string()
       }
-    })
+    });
+    self.text = filtered;
   }
 
-  pub fn eval<'a>(&'a mut self, input: &'a str) -> ForthResult {
-    let mut input = Self::filter_words(input);
-    while !input.is_empty() {
-      input = self.eval_digits(&input);
-      input = self.eval_operators(&input)?.to_string();
-      input = self.eval_word_declarations(input)?;
-      input = self.eval_word(&input)?;
-      input = self.eval_commands(input)?;
+  pub fn eval(&mut self, input: &str) -> ForthResult {
+    self.text = input.to_string();
+    self.filter_words();
+    while !self.text.is_empty() {
+      self.eval_digits();
+      self.eval_operators()?;
+      // input = self.eval_word_declarations(input)?;
+      // input = self.eval_word(&input)?;
+      self.eval_commands()?;
     }
     Ok(())
   }
 
-  fn eval_digits(&mut self, mut input: &str) -> String {
-    while let (Some(head), tail) = Self::parse_digit(&input) {
-      self.stack.push(head);
-      input = tail;
+  fn eval_digits(&mut self) {
+    while let Some(digit) = self.parse_digit() {
+      self.stack.push(digit);
     }
-    input.to_string()
   }
 
-  fn eval_operators<'a>(&'a mut self, mut input: &'a str) -> Result<&'a str, Error> {
-    while let (Some(operator), tail) = Self::parse_operator(&input) {
+  fn eval_operators<'b>(&'b mut self) -> Result<(), Error> {
+    while let Some(operator) = self.parse_operator() {
       let value2 = self.stack.pop()?;
       let value1 = self.stack.pop()?;
       match operator {
@@ -96,9 +98,8 @@ impl Forth {
         }
         Multiply => self.stack.push(value1 * value2),
       }
-      input = tail;
     }
-    Ok(input)
+    Ok(())
   }
 
   fn eval_word_declarations(&mut self, mut input: String) -> Result<String, Error> {
@@ -116,8 +117,8 @@ impl Forth {
     Ok(input.to_string())
   }
 
-  fn eval_commands(&mut self, mut input: String) -> Result<String, Error> {
-    while let (Some(command), tail) = Self::parse_command(&input)? {
+  fn eval_commands(&mut self) -> Result<(), Error> {
+    while let Some(command) = self.parse_command()? {
       match command {
         Swap => {
           let value2 = self.stack.pop()?;
@@ -143,62 +144,94 @@ impl Forth {
           self.words.insert(key, value);
         }
       }
-      input = tail.to_string();
     }
-    Ok(input)
+    Ok(())
   }
 
-  fn parse_digit(input: &str) -> (Option<Value>, &str) {
-    match input.chars().position(|chr| chr.is_whitespace()) {
+  fn parse_digit(&mut self) -> Option<Value> {
+    match self.text.chars().position(|chr| chr.is_whitespace()) {
       Some(position) => {
-        let head = &input[..position];
-        let tail = &input[position..];
+        let head = &self.text.clone()[..position];
+        let tail = &self.text.clone()[position..];
         if let Ok(value) = head.parse::<Value>() {
-          (Some(value), tail.trim_left())
+          self.text = tail.trim_left().to_string();
+          Some(value)
         } else {
-          (None, input.trim())
+          self.text = self.text.trim().to_string();
+          None
         }
       }
-      _ => match input.parse::<Value>() {
-        Ok(value) => (Some(value), ""),
-        _ => (None, input),
+      _ => match self.text.parse::<Value>() {
+        Ok(value) => {
+          self.text = "".to_string();
+          Some(value)
+        }
+        _ => None,
       },
     }
   }
 
-  fn parse_operator(input: &str) -> (Option<Operator>, &str) {
-    if input.is_empty() {
-      return (None, "");
+  fn parse_operator(&mut self) -> Option<Operator> {
+    if self.text.is_empty() {
+      self.text = "".to_string();
+      return None;
     }
-    let head = &input[..1];
-    let tail = &input[1..].trim_left();
+    let text = self.text.clone();
+    let head = &text[..1];
+    let tail = &text[1..].trim_left();
     match head {
-      "+" => (Some(Plus), tail),
-      "-" => (Some(Minus), tail),
-      "/" => (Some(Divide), tail),
-      "*" => (Some(Multiply), tail),
-      _ => (None, input),
+      "+" => {
+        self.text = tail.to_string();
+        Some(Plus)
+      }
+      "-" => {
+        self.text = tail.to_string();
+        Some(Minus)
+      }
+      "/" => {
+        self.text = tail.to_string();
+        Some(Divide)
+      }
+      "*" => {
+        self.text = tail.to_string();
+        Some(Multiply)
+      }
+      _ => None,
     }
   }
 
-  fn parse_command(input: &str) -> Result<(Option<Command>, String), Error> {
-    if input.is_empty() {
-      return Ok((None, "".to_string()));
+  fn parse_command(&mut self) -> Result<Option<Command>, Error> {
+    if self.text.is_empty() {
+      self.text = "".to_string();
+      return Ok(None);
     }
-    let (head, tail) = match input.chars().position(|chr| chr.is_whitespace()) {
+    let text = self.text.clone();
+    let (head, tail) = match self.text.chars().position(|chr| chr.is_whitespace()) {
       Some(position) => {
-        let head = input[..position].to_lowercase();
-        let tail = input[position..].trim_left();
+        let head = text[..position].to_lowercase();
+        let tail = text[position..].trim_left().to_string();
         (head, tail)
       }
-      None => (input.to_string().to_lowercase(), ""),
+      None => (self.text.to_string().to_lowercase(), "".to_string()),
     };
     match head.as_str() {
-      "drop" => Ok((Some(Dropp), tail.to_string())),
-      "dup" => Ok((Some(Dup), tail.to_string())),
-      "swap" => Ok((Some(Swap), tail.to_string())),
-      "over" => Ok((Some(Over), tail.to_string())),
-      digits if digits.parse::<u32>().is_ok() => Ok((None, "".to_string())),
+      "drop" => {
+        self.text = tail;
+        Ok(Some(Dropp))
+      }
+      "dup" => {
+        self.text = tail;
+        Ok(Some(Dup))
+      }
+      "swap" => {
+        self.text = tail;
+        Ok(Some(Swap))
+      }
+      "over" => {
+        self.text = tail;
+        Ok(Some(Over))
+      }
+      digits if digits.parse::<u32>().is_ok() => Ok(None),
       _ => Err(Error::UnknownWord),
     }
   }
@@ -241,7 +274,7 @@ impl Forth {
     ))
   }
 
-  fn parse_word<'a>(&self, input: &'a str) -> (Option<String>, &'a str) {
+  fn parse_word<'b>(&self, input: &'b str) -> (Option<String>, &'b str) {
     let (head, tail) = match input.chars().position(|chr| chr.is_whitespace()) {
       Some(position) => {
         let head = &input[..position];
