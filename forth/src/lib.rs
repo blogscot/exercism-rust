@@ -53,14 +53,13 @@ impl Forth {
   }
 
   fn filter_words(&mut self) {
-    let filtered = self.text.chars().fold(String::new(), |acc, chr| {
+    self.text = self.text.chars().fold(String::new(), |acc, chr| {
       if chr.is_whitespace() || chr.is_control() {
         acc + &' '.to_string()
       } else {
         acc + &chr.to_string()
       }
-    });
-    self.text = filtered;
+    })
   }
 
   pub fn eval(&mut self, input: &str) -> ForthResult {
@@ -82,40 +81,40 @@ impl Forth {
     }
   }
 
-  fn eval_operators(&mut self) -> Result<(), Error> {
+  fn eval_operators(&mut self) -> ForthResult {
     while let Some(operator) = self.parse_operator() {
       let value2 = self.stack.pop()?;
       let value1 = self.stack.pop()?;
       match operator {
         Plus => self.stack.push(value1 + value2),
         Minus => self.stack.push(value1 - value2),
+        Multiply => self.stack.push(value1 * value2),
         Divide => {
           if value2 == 0 {
             return Err(Error::DivisionByZero);
           }
           self.stack.push(value1 / value2)
         }
-        Multiply => self.stack.push(value1 * value2),
       }
     }
     Ok(())
   }
 
-  fn eval_word_declarations(&mut self) -> Result<(), Error> {
+  fn eval_word_declarations(&mut self) -> ForthResult {
     while let Some(Word((key, value))) = self.parse_word_delcaration()? {
       self.words.insert(key, value);
     }
     Ok(())
   }
 
-  fn eval_word(&mut self) -> Result<(), Error> {
+  fn eval_word(&mut self) -> ForthResult {
     if let Some(value) = self.parse_word() {
       self.text = value;
     }
     Ok(())
   }
 
-  fn eval_commands(&mut self) -> Result<(), Error> {
+  fn eval_commands(&mut self) -> ForthResult {
     while let Some(command) = self.parse_command()? {
       match command {
         Swap => {
@@ -147,19 +146,20 @@ impl Forth {
   }
 
   fn parse_digit(&mut self) -> Option<Value> {
-    match self.text.chars().position(|chr| chr.is_whitespace()) {
+    let text = self.text.clone();
+    match text.chars().position(|chr| chr.is_whitespace()) {
       Some(position) => {
-        let head = &self.text.clone()[..position];
-        let tail = &self.text.clone()[position..];
+        let head = &text[..position];
+        let tail = &text[position..];
         if let Ok(value) = head.parse::<Value>() {
           self.text = tail.trim_left().to_string();
           Some(value)
         } else {
-          self.text = self.text.trim().to_string();
+          self.text = text.trim().to_string();
           None
         }
       }
-      _ => match self.text.parse::<Value>() {
+      _ => match text.parse::<Value>() {
         Ok(value) => {
           self.text = "".to_string();
           Some(value)
@@ -170,11 +170,10 @@ impl Forth {
   }
 
   fn parse_operator(&mut self) -> Option<Operator> {
-    if self.text.is_empty() {
-      self.text = "".to_string();
+    let text = self.text.clone();
+    if text.is_empty() {
       return None;
     }
-    let text = self.text.clone();
     let head = &text[..1];
     let tail = &text[1..].trim_left();
     match head {
@@ -199,12 +198,11 @@ impl Forth {
   }
 
   fn parse_command(&mut self) -> Result<Option<Command>, Error> {
-    if self.text.is_empty() {
-      self.text = "".to_string();
+    let text = self.text.clone();
+    if text.is_empty() {
       return Ok(None);
     }
-    let text = self.text.clone();
-    let (head, tail) = match self.text.chars().position(|chr| chr.is_whitespace()) {
+    let (head, tail) = match text.chars().position(|chr| chr.is_whitespace()) {
       Some(position) => {
         let head = text[..position].to_lowercase();
         let tail = text[position..].trim_left().to_string();
@@ -281,9 +279,9 @@ impl Forth {
       }
       None => (input.as_str(), ""),
     };
-    match self.words.get(&head.to_lowercase()) {
-      Some(value) => Some(value.to_string() + tail),
-      None => None,
-    }
+    self
+      .words
+      .get(&head.to_lowercase())
+      .and_then(|value| Some(value.to_string() + tail))
   }
 }
