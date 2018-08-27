@@ -74,11 +74,9 @@ fn encode(input: &str) -> u32 {
 }
 
 fn check_valid_line_count(input: &str) -> Result<(), Error> {
-  let line_count = input
-    .chars()
-    .fold(0usize, |acc, chr| if chr == '\n' { acc + 1 } else { acc });
-  if line_count % 3 != 0 {
-    Err(Error::InvalidRowCount(line_count + 1))
+  let line_count = input.lines().fold(0, |acc, _| acc + 1);
+  if line_count % 4 != 0 {
+    Err(Error::InvalidRowCount(line_count))
   } else {
     Ok(())
   }
