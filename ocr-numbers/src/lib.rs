@@ -13,12 +13,8 @@ pub fn convert(input: &str) -> Result<String, Error> {
 }
 
 fn convert_line(input: &str) -> Result<String, Error> {
-  if let Some(count) = is_valid_line_count(&input) {
-    return Err(Error::InvalidRowCount(count));
-  }
-  if let Some(count) = is_valid_column_length(&input) {
-    return Err(Error::InvalidColumnCount(count));
-  }
+  check_valid_line_count(&input)?;
+  check_valid_column_length(&input)?;
 
   let mut parts = vec![];
   for line in input.split('\n') {
@@ -50,12 +46,14 @@ fn convert_line(input: &str) -> Result<String, Error> {
 }
 
 fn convert_digit(input: &str) -> Result<String, Error> {
-  let binary_encodings = vec![
-    125820, 756, 123606, 123390, 11691, 129222, 129465, 118854, 130194, 129951,
+  let ocr_0to9_encodings = vec![
+    125_820, 756, 123_606, 123_390, 11_691, 129_222, 129_465, 118_854, 130_194, 129_951,
   ];
 
   let encoding = encode(input);
-  let find_encoding = binary_encodings.iter().position(|&value| value == encoding);
+  let find_encoding = ocr_0to9_encodings
+    .iter()
+    .position(|&value| value == encoding);
   match find_encoding {
     Some(position) => Ok(position.to_string()),
     _ => Ok("?".to_string()),
@@ -63,7 +61,7 @@ fn convert_digit(input: &str) -> Result<String, Error> {
 }
 
 fn encode(input: &str) -> u32 {
-  let result: String = input
+  let base3_encoding: String = input
     .chars()
     .filter(|&chr| chr != '\n')
     .map(|chr| match chr {
@@ -72,25 +70,26 @@ fn encode(input: &str) -> u32 {
       _ => "0",
     })
     .collect();
-  u32::from_str_radix(&result, 3).unwrap()
+  u32::from_str_radix(&base3_encoding, 3).unwrap()
 }
 
-fn is_valid_line_count(input: &str) -> Option<usize> {
-  let count = input
+fn check_valid_line_count(input: &str) -> Result<(), Error> {
+  let line_count = input
     .chars()
     .fold(0usize, |acc, chr| if chr == '\n' { acc + 1 } else { acc });
-  if count % 3 != 0 {
-    Some(count + 1)
+  if line_count % 3 != 0 {
+    Err(Error::InvalidRowCount(line_count + 1))
   } else {
-    None
+    Ok(())
   }
 }
 
-fn is_valid_column_length(input: &str) -> Option<usize> {
+fn check_valid_column_length(input: &str) -> Result<(), Error> {
   let segment: String = input.chars().take_while(|&chr| chr != '\n').collect();
-  if segment.len() % 3 != 0 {
-    Some(segment.len())
+  let segment_length = segment.len();
+  if segment_length % 3 != 0 {
+    Err(Error::InvalidColumnCount(segment_length))
   } else {
-    None
+    Ok(())
   }
 }
