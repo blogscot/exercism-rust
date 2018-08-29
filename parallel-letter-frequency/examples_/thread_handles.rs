@@ -1,33 +1,17 @@
-use std::sync::mpsc;
-use std::sync::mpsc::Sender;
 use std::{collections::HashMap, thread};
 
 pub type LetterCount = HashMap<char, u32>;
 
 pub fn frequency<'a>(text: &'a [&'static str], num_workers: usize) -> LetterCount {
-  if text.len() < 128 {
-    return frequency_helper(text);
-  }
-  let (tx, rx) = mpsc::channel();
+  let mut handles: Vec<thread::JoinHandle<LetterCount>> = Vec::new();
 
-  let chunks = build_chunks(text, num_workers)
+  for chunk in build_chunks(text, num_workers) {
+    handles.push(thread::spawn(move || frequency_helper(&chunk)));
+  }
+
+  handles
     .into_iter()
-    .filter(|chunk| !chunk.is_empty())
-    .collect::<Vec<_>>();
-  let num_chunks = chunks.len();
-
-  for chunk in chunks {
-    let tx1 = Sender::clone(&tx);
-    thread::spawn(move || tx1.send(frequency_helper(&chunk)).unwrap());
-  }
-
-  let mut results = vec![];
-  for _ in 0..num_chunks {
-    results.push(rx.recv().unwrap());
-  }
-
-  results
-    .into_iter()
+    .map(|handle| handle.join().unwrap())
     .fold(HashMap::new(), |acc, value| add(acc, value))
 }
 
