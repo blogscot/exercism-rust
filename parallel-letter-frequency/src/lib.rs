@@ -14,20 +14,14 @@ pub fn frequency<'a>(text: &'a [&'static str], num_workers: usize) -> LetterCoun
     .into_iter()
     .filter(|chunk| !chunk.is_empty())
     .collect::<Vec<_>>();
-  let num_chunks = chunks.len();
 
   for chunk in chunks {
     let tx1 = Sender::clone(&tx);
     thread::spawn(move || tx1.send(frequency_helper(&chunk)).unwrap());
   }
 
-  let mut results = vec![];
-  for _ in 0..num_chunks {
-    results.push(rx.recv().unwrap());
-  }
-
-  results
-    .into_iter()
+  rx.into_iter()
+    .take(num_workers)
     .fold(HashMap::new(), |acc, value| add(acc, value))
 }
 
