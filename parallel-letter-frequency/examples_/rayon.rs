@@ -21,17 +21,10 @@ fn add(mut list1: HashMap<char, usize>, list2: HashMap<char, usize>) -> HashMap<
 }
 
 pub fn frequency(texts: &[&str], num_workers: usize) -> HashMap<char, usize> {
-  if num_workers == 1 {
-    texts
-      .iter()
-      .map(|text| frequency_helper(text))
-      .fold(HashMap::new(), |acc, value| add(acc, value))
-  } else {
-    ThreadPoolBuilder::new().num_threads(num_workers);
-    texts
-      .par_iter()
-      .map(|text| frequency_helper(text))
-      .reduce_with(add)
-      .unwrap_or(HashMap::new())
-  }
+  ThreadPoolBuilder::new().num_threads(num_workers);
+  texts
+    .par_iter()
+    .map(|text| frequency_helper(text))
+    .reduce_with(add)
+    .unwrap_or(HashMap::new())
 }
