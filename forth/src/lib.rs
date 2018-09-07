@@ -46,14 +46,9 @@ impl Forth {
   }
 
   fn filter_words(&mut self) {
-    self.text = self.text.chars().fold(String::new(), |mut acc, chr| {
-      if chr.is_whitespace() || chr.is_control() {
-        acc.push(' ');
-      } else {
-        acc.push(chr)
-      }
-      acc
-    })
+    self.text = self
+      .text
+      .replace(|chr: char| chr.is_whitespace() || chr.is_control(), " ")
   }
 
   pub fn eval(&mut self, input: &str) -> ForthResult {
