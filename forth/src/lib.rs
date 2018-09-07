@@ -1,6 +1,5 @@
 #![feature(try_trait)]
-use std::{collections::HashMap, option::NoneError};
-use Command::*;
+use std::collections::HashMap;
 use Operator::*;
 
 pub type Value = i32;
@@ -16,7 +15,7 @@ enum Operator {
 
 #[derive(Debug)]
 enum Command {
-  Dropp, // collides with Rust keyword
+  Drop, // collides with Rust keyword
   Dup,
   Swap,
   Over,
@@ -29,12 +28,6 @@ pub enum Error {
   StackUnderflow,
   UnknownWord,
   InvalidWord,
-}
-
-impl From<NoneError> for Error {
-  fn from(_error: NoneError) -> Error {
-    Error::StackUnderflow
-  }
 }
 
 #[derive(Default, Debug)]
@@ -53,12 +46,13 @@ impl Forth {
   }
 
   fn filter_words(&mut self) {
-    self.text = self.text.chars().fold(String::new(), |acc, chr| {
+    self.text = self.text.chars().fold(String::new(), |mut acc, chr| {
       if chr.is_whitespace() || chr.is_control() {
-        acc + &' '.to_string()
+        acc.push(' ');
       } else {
-        acc + &chr.to_string()
+        acc.push(chr)
       }
+      acc
     })
   }
 
@@ -69,7 +63,7 @@ impl Forth {
       self.eval_digits();
       self.eval_operators()?;
       self.eval_word_declarations()?;
-      self.eval_word()?;
+      self.eval_word();
       self.eval_commands()?;
     }
     Ok(())
@@ -83,8 +77,8 @@ impl Forth {
 
   fn eval_operators(&mut self) -> ForthResult {
     while let Some(operator) = self.parse_operator() {
-      let value2 = self.stack.pop()?;
-      let value1 = self.stack.pop()?;
+      let value2 = self.pop_stack()?;
+      let value1 = self.pop_stack()?;
       match operator {
         Plus => self.stack.push(value1 + value2),
         Minus => self.stack.push(value1 - value2),
@@ -101,43 +95,42 @@ impl Forth {
   }
 
   fn eval_word_declarations(&mut self) -> ForthResult {
-    while let Some(Word((key, value))) = self.parse_word_delcaration()? {
+    while let Some(Command::Word((key, value))) = self.parse_word_declaration()? {
       self.words.insert(key, value);
     }
     Ok(())
   }
 
-  fn eval_word(&mut self) -> ForthResult {
+  fn eval_word(&mut self) {
     if let Some(value) = self.parse_word() {
       self.text = value;
     }
-    Ok(())
   }
 
   fn eval_commands(&mut self) -> ForthResult {
     while let Some(command) = self.parse_command()? {
       match command {
-        Swap => {
-          let value2 = self.stack.pop()?;
-          let value1 = self.stack.pop()?;
+        Command::Swap => {
+          let value2 = self.pop_stack()?;
+          let value1 = self.pop_stack()?;
           self.stack.push(value2);
           self.stack.push(value1);
         }
-        Dropp => {
-          self.stack.pop()?;
+        Command::Drop => {
+          self.pop_stack()?;
         }
-        Dup => {
-          let last = *(self.stack.iter().last()?);
+        Command::Dup => {
+          let last = *(self.stack.iter().last().ok_or(Error::StackUnderflow)?);
           self.stack.push(last);
         }
-        Over => {
-          let value2 = self.stack.pop()?;
-          let value1 = self.stack.pop()?;
+        Command::Over => {
+          let value2 = self.pop_stack()?;
+          let value1 = self.pop_stack()?;
           self.stack.push(value1);
           self.stack.push(value2);
           self.stack.push(value1);
         }
-        Word((key, value)) => {
+        Command::Word((key, value)) => {
           self.words.insert(key, value);
         }
       }
@@ -213,26 +206,26 @@ impl Forth {
     match head.as_str() {
       "drop" => {
         self.text = tail;
-        Ok(Some(Dropp))
+        Ok(Some(Command::Drop))
       }
       "dup" => {
         self.text = tail;
-        Ok(Some(Dup))
+        Ok(Some(Command::Dup))
       }
       "swap" => {
         self.text = tail;
-        Ok(Some(Swap))
+        Ok(Some(Command::Swap))
       }
       "over" => {
         self.text = tail;
-        Ok(Some(Over))
+        Ok(Some(Command::Over))
       }
       digits if digits.parse::<u32>().is_ok() => Ok(None),
       _ => Err(Error::UnknownWord),
     }
   }
 
-  fn parse_word_delcaration(&mut self) -> Result<Option<Command>, Error> {
+  fn parse_word_declaration(&mut self) -> Result<Option<Command>, Error> {
     let input = self.text.clone();
     if !input.starts_with(':') {
       return Ok(None);
@@ -266,7 +259,7 @@ impl Forth {
       .collect();
     self.text = rest.trim_left().to_string();
 
-    Ok(Some(Word((key.to_lowercase(), value))))
+    Ok(Some(Command::Word((key.to_lowercase(), value))))
   }
 
   fn parse_word(&self) -> Option<String> {
@@ -283,5 +276,9 @@ impl Forth {
       .words
       .get(&head.to_lowercase())
       .and_then(|value| Some(value.to_string() + tail))
+  }
+
+  fn pop_stack(&mut self) -> Result<i32, Error> {
+    self.stack.pop().ok_or(Error::StackUnderflow)
   }
 }
