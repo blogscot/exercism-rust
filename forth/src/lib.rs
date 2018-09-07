@@ -15,7 +15,7 @@ enum Operator {
 
 #[derive(Debug)]
 enum Command {
-  Drop, // collides with Rust keyword
+  Drop,
   Dup,
   Swap,
   Over,
@@ -152,13 +152,10 @@ impl Forth {
           None
         }
       }
-      _ => match text.parse::<Value>() {
-        Ok(value) => {
-          self.text = "".to_string();
-          Some(value)
-        }
-        _ => None,
-      },
+      _ => text.parse::<Value>().ok().map(|value| {
+        self.text = "".to_string();
+        value
+      }),
     }
   }
 
